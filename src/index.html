@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TrashTalk</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="main-container" class="main-layout">
+      <!-- Sidebar -->
+      <aside class="sidebar glass-container">
+        <div class="sidebar-brand">🗑️ TrashTalk</div>
+        <nav class="sidebar-nav">
+          <button class="nav-item active" data-tab="prompt">Friday Prompt</button>
+          <button class="nav-item" data-tab="ghost">Ghost Folder</button>
+          <button class="nav-item" data-tab="settings">Settings</button>
+        </nav>
+      </aside>
+
+      <!-- Content Area -->
+      <main class="content-area">
+        <!-- TAB: Friday Prompt -->
+        <section id="tab-prompt" class="tab-content active">
+          <div id="prompt-window" class="glass-container prompt-window">
+            <header>
+              <h1 id="prompt-title">Hey, ada [Size] sampah di Downloads.</h1>
+            </header>
+            <div class="body-text" id="prompt-body">
+              File ini udah nggak disentuh lebih dari 2 minggu.
+            </div>
+            
+            <div class="action-stack">
+              <button class="btn-primary" id="btn-purge-all">
+                Hapus Semua Installer (Ghost Folder)
+              </button>
+              <button class="btn-secondary" id="btn-pick-custom">
+                Pilih Ekstensi / Rentang Waktu...
+              </button>
+              <button class="btn-tertiary" id="btn-later">
+                Nanti Aja (Ingatkan Minggu Depan)
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB: Ghost Folder Manager -->
+        <section id="tab-ghost" class="tab-content">
+          <div class="glass-container manager-window">
+            <header class="manager-header">
+              <h2>Ghost Folder Manager</h2>
+              <p class="text-secondary">Files here will be permanently deleted after 7 days.</p>
+            </header>
+            
+            <div class="table-container">
+              <table class="ghost-table">
+                <thead>
+                  <tr>
+                    <th>File Name</th>
+                    <th>Original Path</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="ghost-list-body"></tbody>
+              </table>
+            </div>
+
+            <footer class="manager-footer">
+              <button class="btn-destructive" id="btn-empty-ghost">Empty Ghost Folder Now</button>
+            </footer>
+          </div>
+        </section>
+
+        <!-- TAB: Unified Settings -->
+        <section id="tab-settings" class="tab-content">
+          <div class="glass-container manager-window">
+            <header class="manager-header">
+              <h2>Settings</h2>
+              <p class="text-secondary">Configure your preferences.</p>
+            </header>
+
+            <!-- Schedule Settings -->
+            <div class="settings-section">
+              <h3>Schedule Settings</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="schedule-day">Run every:</label>
+                  <select id="schedule-day">
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="schedule-time">At time:</label>
+                  <input type="time" id="schedule-time">
+                </div>
+                <div class="form-group" style="justify-content: flex-end;">
+                  <button class="btn-primary btn-small" id="btn-save-schedule">Save Schedule</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ignore List Settings -->
+            <div class="settings-section">
+              <h3>Ignore List</h3>
+              <div class="ignore-input-group">
+                <input type="text" id="ignore-input" placeholder="Enter path or filename to ignore...">
+                <button class="btn-primary btn-small" id="btn-add-ignore">Add</button>
+              </div>
+              <div class="ignore-list-container">
+                <ul id="ignore-list-items" class="ignore-list"></ul>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Custom Selection Modal -->
+    <div id="custom-modal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header" id="modal-header">Pilih Ekstensi</div>
+        <div class="modal-body">
+          <div class="checkbox-group" id="extensions-list">
+            <label class="checkbox-item">
+              <input type="checkbox" value="Stale Installers" checked>
+              <span>Installer (.exe, .msi)</span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-tertiary" id="modal-cancel">Batal</button>
+          <button class="btn-primary" id="modal-apply">Terapkan & Bersihkan</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

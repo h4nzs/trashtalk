@@ -22,5 +22,9 @@
   "modal_apply": "Apply & Clean",
   "modal_cancel": "Cancel",
   "time_range_label": "Time Range",
+  "range_14_days": "> 14 Days (Standard)",
+  "range_30_days": "> 30 Days (1 Month)",
+  "range_90_days": "> 90 Days (3 Months)",
+  "range_365_days": "> 1 Year",
   "extensions_label": "Extensions"
 }

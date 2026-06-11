@@ -22,5 +22,9 @@
   "modal_apply": "Terapkan & Bersihkan",
   "modal_cancel": "Batal",
   "time_range_label": "Rentang Waktu",
+  "range_14_days": "> 14 Hari (Standar)",
+  "range_30_days": "> 30 Hari (1 Bulan)",
+  "range_90_days": "> 90 Hari (3 Bulan)",
+  "range_365_days": "> 1 Tahun",
   "extensions_label": "Ekstensi"
 }

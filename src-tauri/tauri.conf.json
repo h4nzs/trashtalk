@@ -1,7 +1,7 @@
 {
   "productName": "TrashTalk",
   "version": "0.1.0",
-  "identifier": "com.trashtalk.app",
+  "identifier": "com.trashtalk.cleaner",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -22,13 +22,6 @@
     ],
     "security": {
       "csp": null
-    }
-  },
-  "plugins": {
-    "autostart": {
-      "macOS": {
-        "useLaunchAgent": true
-      }
     }
   },
   "bundle": {

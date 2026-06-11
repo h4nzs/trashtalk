@@ -14,7 +14,9 @@ i18n
     },
     fallbackLng: 'en',
     interpolation: {
-      escapeValue: false // not needed for xss
+      escapeValue: false, // not needed for xss
+      prefix: '%{',
+      suffix: '}'
     }
   });
 

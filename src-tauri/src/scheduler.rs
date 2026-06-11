@@ -8,8 +8,6 @@ use tokio::time::sleep;
 
 /// Starts the background scheduler loop.
 pub async fn spawn_scheduler(handle: AppHandle) {
-    println!("⏰ Scheduler thread started.");
-    
     // Initial check for missed schedule on boot
     if let Err(e) = check_and_trigger_if_missed(&handle).await {
         eprintln!("Error checking missed schedule: {}", e);
@@ -21,6 +19,11 @@ pub async fn spawn_scheduler(handle: AppHandle) {
 
         if let Err(e) = check_current_schedule(&handle).await {
             eprintln!("Scheduler error: {}", e);
+        }
+
+        // Run auto-purge check periodically
+        if let Err(e) = crate::ghost::auto_purge_ghost_folder() {
+            eprintln!("Auto-purge error: {}", e);
         }
     }
 }
@@ -46,7 +49,6 @@ async fn check_current_schedule(handle: &AppHandle) -> Result<()> {
             }
         }
 
-        println!("🎯 Scheduled time reached ({} at {}). Triggering prompt.", schedule_day, schedule_time);
         trigger_prompt(handle, &conn)?;
     }
 
@@ -60,11 +62,17 @@ async fn check_and_trigger_if_missed(handle: &AppHandle) -> Result<()> {
     let last_trigger_str = db::get_setting(&conn, "last_trigger").unwrap_or_default();
 
     let target_weekday = Weekday::from_str(&schedule_day_str).map_err(|_| anyhow::anyhow!("Invalid weekday in settings"))?;
-    let last_trigger = DateTime::parse_from_rfc3339(&last_trigger_str)
-        .map(|dt| dt.with_timezone(&Utc))
-        .unwrap_or_else(|_| DateTime::from_timestamp(0, 0).unwrap().with_timezone(&Utc));
-
     let now = Utc::now();
+
+    let last_trigger = if last_trigger_str.is_empty() {
+        // First run initialization, avoid triggering immediately
+        db::update_setting(&conn, "last_trigger", &now.to_rfc3339()).unwrap_or_default();
+        now
+    } else {
+        DateTime::parse_from_rfc3339(&last_trigger_str)
+            .map(|dt| dt.with_timezone(&Utc))
+            .unwrap_or(now)
+    };
     
     // Logic: If last trigger was more than 7 days ago, or if we passed the target day/time since last trigger
     // Simplification: Check if the most recent target timestamp in the past is AFTER the last_trigger timestamp.
@@ -72,7 +80,6 @@ async fn check_and_trigger_if_missed(handle: &AppHandle) -> Result<()> {
     let last_target = get_last_occurrence(target_weekday, &schedule_time_str)?;
     
     if last_target > last_trigger && last_target < now {
-        println!("⚠️ Missed schedule detected! Last scheduled was {:?}, but last trigger was {:?}.", last_target, last_trigger);
         trigger_prompt(handle, &conn)?;
     }
 

@@ -304,11 +304,69 @@ button {
 .modal-overlay.active { visibility: visible; opacity: 1; }
 
 .modal-content {
-  width: 400px;
-  padding: 24px;
+  width: 450px;
+  padding: 30px;
   background: #1e1e2e;
   border: var(--border-glass);
   border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-header {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.modal-body .settings-section {
+  gap: 12px;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.modal-body h3 {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+}
+
+.full-width-select {
+  width: 100%;
+}
+
+.checkbox-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.checkbox-item input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .monospace { font-family: var(--font-mono); }

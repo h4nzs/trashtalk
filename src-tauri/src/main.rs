@@ -8,7 +8,7 @@ mod scheduler;
 
 use anyhow::Result;
 use clap::Parser;
-use cli::{Cli, Commands};
+use cli::{Cli, Commands, IgnoreAction};
 use category::FileCategory;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
@@ -46,7 +46,7 @@ async fn run_scan() -> Result<ScanSummary, String> {
     let mut total_size_bytes = 0;
 
     for file in all_files {
-        if scanner::is_stale(&file).map_err(|e| e.to_string())? {
+        if scanner::is_stale(&file, 14).map_err(|e| e.to_string())? {
             total_stale += 1;
             if let Ok(meta) = std::fs::metadata(&file) {
                 total_size_bytes += meta.len();
@@ -68,7 +68,7 @@ async fn run_purge() -> Result<usize, String> {
     let conn = db::init_db().map_err(|e| e.to_string())?;
 
     for file in all_files {
-        if scanner::is_stale(&file).map_err(|e| e.to_string())? {
+        if scanner::is_stale(&file, 14).map_err(|e| e.to_string())? {
             let original_path = file.to_string_lossy().to_string();
             let file_name = file.file_name().and_then(|s| s.to_str()).unwrap_or("Unknown").to_string();
             
@@ -77,6 +77,34 @@ async fn run_purge() -> Result<usize, String> {
             
             db::log_ghost_file(&conn, &file_name, &original_path, &ghost_path).map_err(|e| e.to_string())?;
             moved_count += 1;
+        }
+    }
+
+    Ok(moved_count)
+}
+
+#[tauri::command]
+async fn run_custom_purge(time_range_days: i64, categories: Vec<String>) -> Result<usize, String> {
+    let all_files = scanner::scan_downloads().map_err(|e| e.to_string())?;
+    let mut moved_count = 0;
+    let conn = db::init_db().map_err(|e| e.to_string())?;
+
+    for file in all_files {
+        if scanner::is_stale(&file, time_range_days).map_err(|e| e.to_string())? {
+            let file_name = file.file_name().and_then(|s| s.to_str()).unwrap_or("Unknown");
+            let extension = file.extension().and_then(|s| s.to_str()).unwrap_or("");
+            let cat = category::categorize_file(file_name, extension);
+            
+            if categories.contains(&cat.as_str().to_string()) {
+                let original_path = file.to_string_lossy().to_string();
+                let file_name_string = file_name.to_string();
+                
+                let ghost_path_buf = ghost::move_to_ghost_folder(&file).map_err(|e| e.to_string())?;
+                let ghost_path = ghost_path_buf.to_string_lossy().to_string();
+                
+                db::log_ghost_file(&conn, &file_name_string, &original_path, &ghost_path).map_err(|e| e.to_string())?;
+                moved_count += 1;
+            }
         }
     }
 
@@ -150,6 +178,11 @@ async fn save_schedule(schedule: AppSchedule) -> Result<(), String> {
 }
 
 fn main() -> Result<()> {
+    // Silence libayatana deprecation warnings on Linux
+    unsafe {
+        std::env::set_var("G_MESSAGES_DEBUG", "none");
+    }
+
     let args: Vec<String> = std::env::args().collect();
     if args.len() > 1 {
         let cli = Cli::parse();
@@ -227,6 +260,7 @@ fn main() -> Result<()> {
         .invoke_handler(tauri::generate_handler![
             run_scan,
             run_purge,
+            run_custom_purge,
             get_ghost_files,
             restore_ghost_file,
             empty_ghost,
@@ -261,7 +295,7 @@ fn run_cli(cli: Cli) -> Result<()> {
             let mut total_stale = 0;
 
             for file in all_files {
-                if scanner::is_stale(&file)? {
+                if scanner::is_stale(&file, 14)? {
                     total_stale += 1;
                     let file_name = file.file_name().and_then(|s| s.to_str()).unwrap_or("Unknown");
                     let extension = file.extension().and_then(|s| s.to_str()).unwrap_or("");
@@ -296,7 +330,7 @@ fn run_cli(cli: Cli) -> Result<()> {
             let all_files = scanner::scan_downloads()?;
             let mut moved_count = 0;
             for file in all_files {
-                if scanner::is_stale(&file)? {
+                if scanner::is_stale(&file, 14)? {
                     let original = file.to_string_lossy().to_string();
                     let name = file.file_name().and_then(|s| s.to_str()).unwrap_or("Unknown").to_string();
                     let ghost = ghost::move_to_ghost_folder(&file)?.to_string_lossy().to_string();
@@ -305,6 +339,67 @@ fn run_cli(cli: Cli) -> Result<()> {
                 }
             }
             println!("✅ Purge complete. Moved {} files to Ghost Folder.", moved_count);
+        }
+        Commands::GhostList => {
+            let logs = db::get_ghost_logs(&conn)?;
+            if logs.is_empty() {
+                println!("Ghost Folder is empty.");
+            } else {
+                for (id, name, original, _) in logs {
+                    println!("[{}] {} (Original: {})", id, name, original);
+                }
+            }
+        }
+        Commands::Restore { id } => {
+            let logs = db::get_ghost_logs(&conn)?;
+            if let Some((_, _, original, ghost_path)) = logs.into_iter().find(|(log_id, _, _, _)| *log_id == id) {
+                let g_path = PathBuf::from(&ghost_path);
+                let o_path = PathBuf::from(&original);
+                ghost::restore_file(&g_path, &o_path)?;
+                db::delete_log(&conn, id)?;
+                println!("✅ Restored file to {}", original);
+            } else {
+                println!("❌ File with ID {} not found in Ghost logs.", id);
+            }
+        }
+        Commands::GhostEmpty => {
+            ghost::empty_ghost_folder()?;
+            db::clear_ghost_logs(&conn)?;
+            println!("✅ Ghost folder emptied successfully.");
+        }
+        Commands::Ignore { action } => {
+            let mut list = i18n::read_ignore_list()?;
+            match action {
+                IgnoreAction::Add { path } => {
+                    if !list.contains(&path) {
+                        list.push(path.clone());
+                        i18n::write_ignore_list(list)?;
+                        println!("✅ Added '{}' to ignore list.", path);
+                    } else {
+                        println!("⚠️ '{}' is already in the ignore list.", path);
+                    }
+                }
+                IgnoreAction::List => {
+                    if list.is_empty() {
+                        println!("Ignore list is empty.");
+                    } else {
+                        println!("Ignored paths:");
+                        for item in list {
+                            println!("- {}", item);
+                        }
+                    }
+                }
+                IgnoreAction::Remove { path } => {
+                    let initial_len = list.len();
+                    list.retain(|x| x != &path);
+                    if list.len() < initial_len {
+                        i18n::write_ignore_list(list)?;
+                        println!("✅ Removed '{}' from ignore list.", path);
+                    } else {
+                        println!("⚠️ '{}' not found in ignore list.", path);
+                    }
+                }
+            }
         }
     }
     Ok(())

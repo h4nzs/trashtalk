@@ -3,6 +3,14 @@ import i18n from "./i18n";
 import { ScanSummary, GhostFile, AppSchedule } from "./types";
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Translate static UI elements
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    if (key) {
+      el.textContent = i18n.t(key);
+    }
+  });
+
   // --- Navigation & Tabs ---
   const navItems = document.querySelectorAll(".nav-item");
   const tabs = document.querySelectorAll(".tab-content");
@@ -154,7 +162,26 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   btnPickCustom?.addEventListener("click", () => customModal?.classList.add("active"));
   modalCancel?.addEventListener("click", () => customModal?.classList.remove("active"));
-  modalApply?.addEventListener("click", () => customModal?.classList.remove("active"));
+  modalApply?.addEventListener("click", async () => {
+    const selectedCategories = Array.from(document.querySelectorAll("#extensions-list input[type='checkbox']:checked"))
+      .map(el => (el as HTMLInputElement).value);
+    const timeRange = (document.getElementById("purge-time-range") as HTMLSelectElement).value;
+
+    if (selectedCategories.length === 0) {
+      alert("Please select at least one category.");
+      return;
+    }
+
+    try {
+      const timeRangeDays = parseInt(timeRange, 10);
+      const count = await invoke<number>("run_custom_purge", { timeRangeDays, categories: selectedCategories });
+      alert(`Applied filter: > ${timeRangeDays} days for ${selectedCategories.join(", ")}. Cleaned ${count} files.`);
+      customModal?.classList.remove("active");
+      runInitialScan();
+    } catch (error) {
+      alert(error);
+    }
+  });
 
   function formatBytes(bytes: number, decimals = 2) {
     if (bytes === 0) return '0 Bytes';

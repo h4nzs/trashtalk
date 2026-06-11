@@ -4,9 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TrashTalk</title>
-    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./src/style.css" />
   </head>
   <body>
+    <!-- Main App Container -->
     <div id="main-container" class="main-layout">
       <!-- Sidebar -->
       <aside class="sidebar glass-container">
@@ -31,14 +32,14 @@
             </div>
             
             <div class="action-stack">
-              <button class="btn-primary" id="btn-purge-all">
-                Hapus Semua Installer (Ghost Folder)
+              <button class="btn-primary" id="btn-purge-all" data-i18n="action_purge_all">
+                Delete All Installers (Ghost Folder)
               </button>
-              <button class="btn-secondary" id="btn-pick-custom">
-                Pilih Ekstensi / Rentang Waktu...
+              <button class="btn-secondary" id="btn-pick-custom" data-i18n="action_pick_custom">
+                Pick Extensions / Time Range...
               </button>
-              <button class="btn-tertiary" id="btn-later">
-                Nanti Aja (Ingatkan Minggu Depan)
+              <button class="btn-tertiary" id="btn-later" data-i18n="action_later">
+                Not Now (Remind me next week)
               </button>
             </div>
           </div>
@@ -61,7 +62,9 @@
                     <th>Action</th>
                   </tr>
                 </thead>
-                <tbody id="ghost-list-body"></tbody>
+                <tbody id="ghost-list-body">
+                  <!-- Ghost files rows here -->
+                </tbody>
               </table>
             </div>
 
@@ -113,7 +116,9 @@
                 <button class="btn-primary btn-small" id="btn-add-ignore">Add</button>
               </div>
               <div class="ignore-list-container">
-                <ul id="ignore-list-items" class="ignore-list"></ul>
+                <ul id="ignore-list-items" class="ignore-list">
+                  <!-- Ignore items here -->
+                </ul>
               </div>
             </div>
           </div>
@@ -124,22 +129,58 @@
     <!-- Custom Selection Modal -->
     <div id="custom-modal" class="modal-overlay">
       <div class="modal-content">
-        <div class="modal-header" id="modal-header">Pilih Ekstensi</div>
+        <div class="modal-header" id="modal-header" data-i18n="extensions_label">Ekstensi</div>
         <div class="modal-body">
-          <div class="checkbox-group" id="extensions-list">
+          <div class="settings-section">
+            <h3 data-i18n="time_range_label">Rentang Waktu</h3>
+            <select id="purge-time-range" class="full-width-select">
+              <option value="14" selected data-i18n="range_14_days">> 14 Hari (Standar)</option>
+              <option value="30" data-i18n="range_30_days">> 30 Hari (1 Bulan)</option>
+              <option value="90" data-i18n="range_90_days">> 90 Hari (3 Bulan)</option>
+              <option value="365" data-i18n="range_365_days">> 1 Tahun</option>
+            </select>
+          </div>
+
+          <div class="settings-section">
+            <h3 data-i18n="extensions_label">Ekstensi</h3>
+            <div class="checkbox-group" id="extensions-list">
             <label class="checkbox-item">
               <input type="checkbox" value="Stale Installers" checked>
-              <span>Installer (.exe, .msi)</span>
+              <span data-i18n="stale_installers">Installer Basi</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" value="Social Media">
+              <span data-i18n="social_media">Jejak Sosmed</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" value="Heavy Videos">
+              <span data-i18n="heavy_videos">Video & Rekaman</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" value="Work Documents">
+              <span data-i18n="work_documents">Dokumen Kerja</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" value="Archives">
+              <span data-i18n="archives">Arsip Mentahan</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" value="Design Files">
+              <span data-i18n="design_files">Sisa File Desain</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" value="Memes & Gifs">
+              <span data-i18n="memes_gifs">Meme & Hiburan</span>
             </label>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-tertiary" id="modal-cancel">Batal</button>
-          <button class="btn-primary" id="modal-apply">Terapkan & Bersihkan</button>
+          <button class="btn-tertiary" id="modal-cancel" data-i18n="modal_cancel">Batal</button>
+          <button class="btn-primary" id="modal-apply" data-i18n="modal_apply">Terapkan & Bersihkan</button>
         </div>
       </div>
     </div>
 
-    <script type="module" src="./main.ts"></script>
+    <script type="module" src="./src/main.ts"></script>
   </body>
 </html>

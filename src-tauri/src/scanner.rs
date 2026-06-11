@@ -75,9 +75,9 @@ fn is_ignored(entry: &DirEntry, ignore_list: &[PathBuf]) -> bool {
     false
 }
 
-/// Checks if a file is 'stale' (last modified more than 14 days ago).
+/// Checks if a file is 'stale' (last modified more than `days` ago).
 /// Returns true if stale, false otherwise.
-pub fn is_stale(path: &Path) -> Result<bool> {
+pub fn is_stale(path: &Path, days: i64) -> Result<bool> {
     let metadata = std::fs::metadata(path)
         .with_context(|| format!("Failed to get metadata for {:?}", path))?;
     
@@ -88,7 +88,7 @@ pub fn is_stale(path: &Path) -> Result<bool> {
         .context("Invalid modification time timestamp")?;
     
     let now = Utc::now();
-    let threshold = now - Duration::days(14);
+    let threshold = now - Duration::days(days);
     
     Ok(mtime_datetime < threshold)
 }

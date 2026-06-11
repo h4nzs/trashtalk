@@ -107,3 +107,67 @@ pub fn empty_ghost_folder() -> Result<()> {
 
     Ok(())
 }
+
+/// Automatically purges files older than 7 days and enforces a 5GB capacity limit.
+pub fn auto_purge_ghost_folder() -> Result<()> {
+    let home = home_dir().context("Could not find home directory")?;
+    let ghost_dir = home.join(".trashtalk_ghost");
+
+    if !ghost_dir.exists() {
+        return Ok(());
+    }
+
+    let mut files = Vec::new();
+    let mut total_size: u64 = 0;
+
+    for entry in fs::read_dir(&ghost_dir).context("Failed to read ghost folder")? {
+        let entry = entry.context("Failed to read directory entry")?;
+        if entry.path().is_file() {
+            if let Ok(metadata) = entry.metadata() {
+                let mtime = filetime::FileTime::from_last_modification_time(&metadata);
+                let mtime_seconds = mtime.unix_seconds();
+                
+                if let Some(mtime_datetime) = chrono::DateTime::from_timestamp(mtime_seconds, 0) {
+                    files.push((entry.path(), mtime_datetime, metadata.len()));
+                    total_size += metadata.len();
+                }
+            }
+        }
+    }
+
+    // 1. Delete files older than 7 days
+    let now = chrono::Utc::now();
+    let seven_days_ago = now - chrono::Duration::days(7);
+
+    // Keep track of files that survived the 7-day purge
+    let mut remaining_files = Vec::new();
+
+    for (path, mtime, size) in files {
+        if mtime < seven_days_ago {
+            if fs::remove_file(&path).is_ok() {
+                total_size = total_size.saturating_sub(size);
+            }
+        } else {
+            remaining_files.push((path, mtime, size));
+        }
+    }
+
+    // 2. Enforce 5GB cap (5 * 1024 * 1024 * 1024 bytes = 5368709120 bytes)
+    const MAX_SIZE_BYTES: u64 = 5_368_709_120;
+
+    if total_size > MAX_SIZE_BYTES {
+        // Sort files by modification time (oldest first)
+        remaining_files.sort_by_key(|&(_, mtime, _)| mtime);
+
+        for (path, _, size) in remaining_files {
+            if total_size <= MAX_SIZE_BYTES {
+                break;
+            }
+            if fs::remove_file(&path).is_ok() {
+                total_size = total_size.saturating_sub(size);
+            }
+        }
+    }
+
+    Ok(())
+}

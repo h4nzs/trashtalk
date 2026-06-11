@@ -30,10 +30,14 @@
             <div class="body-text" id="prompt-body">
               File ini udah nggak disentuh lebih dari 2 minggu.
             </div>
+
+            <div class="detected-files-container">
+              <ul id="detected-files-list" class="stale-files-list"></ul>
+            </div>
             
             <div class="action-stack">
               <button class="btn-primary" id="btn-purge-all" data-i18n="action_purge_all">
-                Delete All Installers (Ghost Folder)
+                Delete All Stale Files (Ghost Folder)
               </button>
               <button class="btn-secondary" id="btn-pick-custom" data-i18n="action_pick_custom">
                 Pick Extensions / Time Range...
@@ -182,5 +186,18 @@
     </div>
 
     <script type="module" src="./src/main.ts"></script>
+
+    <!-- Result Modal -->
+    <div id="result-modal" class="modal-overlay">
+      <div class="modal-content text-center">
+        <div class="modal-header" id="result-header">Cleanup Complete</div>
+        <div class="modal-body" id="result-body">
+          X files have been moved to the Ghost Folder.
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+          <button class="btn-primary" id="btn-result-ok">OK</button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

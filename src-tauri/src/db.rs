@@ -45,6 +45,10 @@ pub fn init_db() -> Result<Connection> {
     let conn = Connection::open(db_path)
         .context("Failed to open SQLite database")?;
 
+    // Migration: Ensure columns exist (for older installations)
+    let _ = conn.execute("ALTER TABLE file_logs ADD COLUMN ghost_path TEXT", []);
+    let _ = conn.execute("ALTER TABLE file_logs ADD COLUMN status TEXT DEFAULT 'ACTIVE'", []);
+
     // Create the file_logs table if it doesn't exist
     conn.execute(
         "CREATE TABLE IF NOT EXISTS file_logs (
@@ -52,7 +56,7 @@ pub fn init_db() -> Result<Connection> {
             file_name       TEXT NOT NULL,
             original_path   TEXT NOT NULL,
             ghost_path      TEXT,
-            download_date   TIMESTAMP NOT NULL,
+            download_date   TEXT NOT NULL,
             status          TEXT NOT NULL
         )",
         [],
@@ -100,7 +104,7 @@ pub fn update_setting(conn: &Connection, key: &str, value: &str) -> Result<()> {
 
 pub fn log_ghost_file(conn: &Connection, name: &str, original: &str, ghost: &str) -> Result<()> {
     conn.execute(
-        "INSERT INTO file_logs (file_name, original_path, ghost_path, download_date, status)
+        "INSERT OR REPLACE INTO file_logs (file_name, original_path, ghost_path, download_date, status)
          VALUES (?, ?, ?, ?, ?)",
         (name, original, ghost, Utc::now().to_rfc3339(), "GHOST"),
     ).context("Failed to insert ghost file log")?;

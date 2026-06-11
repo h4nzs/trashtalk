@@ -20,7 +20,7 @@ impl FileCategory {
     pub fn as_str(&self) -> &'static str {
         match self {
             FileCategory::StaleInstallers => "Stale Installers",
-            FileCategory::SocialMedia => "Social Media Media",
+            FileCategory::SocialMedia => "Social Media",
             FileCategory::HeavyVideos => "Heavy Videos",
             FileCategory::WorkDocuments => "Work Documents",
             FileCategory::Archives => "Archives",

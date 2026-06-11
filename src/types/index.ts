@@ -1,7 +1,15 @@
+export interface StaleFile {
+  name: string;
+  path: string;
+  size_bytes: number;
+  category: string;
+}
+
 export interface ScanSummary {
   total_stale: number;
   total_size_bytes: number;
   breakdown: Record<string, number>;
+  files: StaleFile[];
 }
 
 export interface GhostFile {
@@ -13,7 +21,7 @@ export interface GhostFile {
 
 export type FileCategoryLabel = 
   | "Stale Installers"
-  | "Social Media Media"
+  | "Social Media"
   | "Heavy Videos"
   | "Work Documents"
   | "Archives"

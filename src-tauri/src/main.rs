@@ -24,10 +24,19 @@ use tauri_plugin_autostart::MacosLauncher;
 rust_i18n::i18n!("locales");
 
 #[derive(Serialize, Deserialize)]
+pub struct StaleFile {
+    pub name: String,
+    pub path: String,
+    pub size_bytes: u64,
+    pub category: String,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct ScanSummary {
     pub total_stale: usize,
     pub total_size_bytes: u64,
     pub breakdown: HashMap<String, usize>,
+    pub files: Vec<StaleFile>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -44,21 +53,35 @@ async fn run_scan() -> Result<ScanSummary, String> {
     let mut summary = HashMap::new();
     let mut total_stale = 0;
     let mut total_size_bytes = 0;
+    let mut stale_files = Vec::new();
 
     for file in all_files {
         if scanner::is_stale(&file, 14).map_err(|e| e.to_string())? {
-            total_stale += 1;
-            if let Ok(meta) = std::fs::metadata(&file) {
-                total_size_bytes += meta.len();
-            }
-            let file_name = file.file_name().and_then(|s| s.to_str()).unwrap_or("Unknown");
+            let size = std::fs::metadata(&file).map(|m| m.len()).unwrap_or(0);
+            let file_name = file.file_name().and_then(|s| s.to_str()).unwrap_or("Unknown").to_string();
             let extension = file.extension().and_then(|s| s.to_str()).unwrap_or("");
-            let cat = category::categorize_file(file_name, extension);
-            *summary.entry(cat.as_str().to_string()).or_insert(0) += 1;
+            let cat = category::categorize_file(&file_name, extension);
+            let cat_str = cat.as_str().to_string();
+
+            total_stale += 1;
+            total_size_bytes += size;
+            *summary.entry(cat_str.clone()).or_insert(0) += 1;
+
+            stale_files.push(StaleFile {
+                name: file_name,
+                path: file.to_string_lossy().to_string(),
+                size_bytes: size,
+                category: cat_str,
+            });
         }
     }
 
-    Ok(ScanSummary { total_stale, total_size_bytes, breakdown: summary })
+    Ok(ScanSummary { 
+        total_stale, 
+        total_size_bytes, 
+        breakdown: summary,
+        files: stale_files 
+    })
 }
 
 #[tauri::command]

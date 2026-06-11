@@ -370,3 +370,47 @@ button {
 }
 
 .monospace { font-family: var(--font-mono); }
+
+.text-center { text-align: center; }
+
+/* Stale Files List in Prompt */
+.detected-files-container {
+  margin: 20px 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: var(--border-glass);
+}
+
+.stale-files-list {
+  list-style: none;
+  padding: 10px;
+}
+
+.stale-files-list li {
+  font-size: 0.85rem;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.stale-files-list li:last-child {
+  border-bottom: none;
+}
+
+.file-name-dim {
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-size-dim {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
